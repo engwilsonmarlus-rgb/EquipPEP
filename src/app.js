@@ -289,6 +289,22 @@
   function itemRec(r) {
     return '<div class="it" onclick="A.receb(\'' + r.id + '\')" style="cursor:pointer"><span class="ib">💵</span><div class="tt"><b>' + h(r.tipo) + '</b><span class="muted">' + dBR(r.data) + '</span></div><span class="vv pos">+' + money(r.valor) + '</span></div>';
   }
+  /* diárias lançadas depois do último depósito confirmado (zera a cada novo depósito) */
+  function ultimoReceb() {
+    return st.recebidos.slice().sort(function (x, y) { return (y.criado || 0) - (x.criado || 0); })[0] || null;
+  }
+  function diariasDesde(ts) {
+    var tot = 0, nD = 0, nM = 0, du = st.diariasUpd || {};
+    Object.keys(st.diarias).forEach(function (d) {
+      if ((du[d] || 0) <= ts) return;
+      var v = C.valorDiaria(st.diarias[d]); tot += v; if (v === C.DIARIA) nD++; else if (v) nM++;
+    });
+    return { tot: C.r2(tot), txt: fmtQtd(nD, nM) };
+  }
+  function fmtQtd(nD, nM) {
+    var t = [nD ? nD + (nD > 1 ? ' diárias' : ' diária') : '', nM ? nM + (nM > 1 ? ' meias' : ' meia') : ''].filter(Boolean).join(' + ');
+    return t || 'nenhuma lançada';
+  }
   function qtdDiarias(ini, fim) {
     var nD = 0, nM = 0;
     Object.keys(st.diarias).forEach(function (d) { if (d >= ini && d <= fim) { if (st.diarias[d] === 'DIÁRIA') nD++; else if (st.diarias[d] === 'MEIA DIÁRIA') nM++; } });
@@ -300,12 +316,13 @@
     var ano = +hj.slice(0, 4), mes = +hj.slice(5, 7), P = C.montarPrestacao(st, ano, mes);
     var mesN = C.MESES[mes - 1].charAt(0) + C.MESES[mes - 1].slice(1).toLowerCase();
     var gastoSemD = C.r2(P.tot.comb + P.tot.hosp + P.tot.div), saldoSemD = C.r2(P.recebido - gastoSemD);
+    var ur = ultimoReceb(), dd = diariasDesde(ur ? (ur.criado || 0) : 0);
     var b = '<div class="grid2 saldos">' +
-      '<div class="card saldo"><div class="lbl">Saldo</div><div class="val">' + money(saldoSemD) + '</div>' +
-      '<div class="sub">recebido ' + money(P.recebido) + '<br>gastos ' + money(gastoSemD) + '</div></div>' +
-      '<div class="card saldo dia" onclick="A.go(\'prest\')" style="cursor:pointer"><div class="lbl">Diárias</div><div class="val">' + money(P.tot.dia) + '</div>' +
-      '<div class="sub">' + qtdDiarias(P.ini, P.fim) + '</div></div></div>' +
-      '<div class="card fech"><span>' + mesN + ': saldo − diárias</span><b>' + money(P.saldo) + '</b></div>';
+      '<div class="card saldo"><div class="lbl">Saldo − Diárias</div><div class="val">' + money(P.saldo) + '</div>' +
+      '<div class="sub">diárias do mês ' + money(P.tot.dia) + '</div></div>' +
+      '<div class="card saldo dia" onclick="A.go(\'prest\')" style="cursor:pointer"><div class="lbl">Diárias</div><div class="val">' + money(dd.tot) + '</div>' +
+      '<div class="sub">' + dd.txt + (ur ? '<br>desde o depósito de ' + dCurto(ur.data) : '') + '</div></div></div>' +
+      '<div class="card fech"><span>' + mesN + ': saldo<br><small class="muted">recebido ' + money(P.recebido) + ' · gastos ' + money(gastoSemD) + '</small></span><b>' + money(saldoSemD) + '</b></div>';
     var pv = (st.previsoes || []).filter(function (p) { return p.fim >= hj; }).sort(function (a, b) { return a.ini < b.ini ? -1 : 1; })[0];
     if (pv) {
       var c = C.calcPrevisao(pv, pv.saldoUsado);
@@ -378,7 +395,7 @@
       '<label class="f">Cliente</label><input class="i" value="' + h(fp.cliente) + '" placeholder="Ex.: Equatorial" oninput="A.fpSet(\'cliente\',this.value)">' +
       '</details></div>' +
       '<div class="card" id="resumo">' + resumoPrev() + '</div>' +
-      '<button class="btn lar" onclick="A.salvarPrev()">Salvar e baixar planilha</button>' +
+      '<button class="btn lar" onclick="A.salvarPrev()">Salvar previsão</button>' +
       '<button class="btn sec" onclick="A.go(\'prevs\')">Cancelar</button>';
     return shell(b);
   }
@@ -547,8 +564,8 @@
       if (p.equipe.some(function (n) { return !n; })) return toast('Preencha o nome de todos da equipe');
       p.id = uid(); p.criado = Date.now(); p.upd = Date.now(); p.criadoDia = hoje(); p.saldoUsado = C.saldoAte(st, p.ini); p.depositoRecebido = false;
       st.previsoes.push(p); save();
-      view = 'prevs'; render();
-      await A.baixarPrev(p.id);
+      view = 'prevs'; render(); window.scrollTo(0, 0);
+      toast('Previsão salva. Para baixar a planilha, toque em ⬇️ Planilha.');
     },
     baixarPrev: async function (id) {
       var p = st.previsoes.find(function (x) { return x.id === id; }); if (!p) return;
@@ -575,7 +592,7 @@
     gasto: function (id) {
       var g0 = id && st.gastos.find(function (x) { return x.id === id; });
       sheet = g0 ? { tipo: 'gasto', edit: true, g: Object.assign({}, g0, { valorTxt: fmtNum(g0.valor) }) }
-        : { tipo: 'gasto', edit: false, g: { id: uid(), cat: 'COMB', classe: '', valorTxt: '', data: hoje() } };
+        : { tipo: 'gasto', edit: false, g: { id: uid(), cat: 'DIA', classe: st.diarias[hoje()] || 'DIÁRIA', valorTxt: '', data: hoje() } };
       rerenderSheet();
     },
     gCat: function (k) { sheet.g.cat = k; sheet.g.classe = k === 'DIA' ? (st.diarias[sheet.g.data] || 'DIÁRIA') : ''; rerenderSheet(); },
