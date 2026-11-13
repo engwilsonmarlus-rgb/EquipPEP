@@ -74,7 +74,7 @@ nav.bot button.on{color:var(--az);font-weight:700}
 .mnav{display:flex;align-items:center;gap:10px}.mnav b{flex:1;text-align:center;font-size:18px}
 .mnav button{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--bd);background:#fff;font-size:20px;cursor:pointer}
 details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
-.dbtn{display:flex;align-items:center;justify-content:space-between;text-align:left;cursor:pointer;color:var(--tx)}
+.dbtn{width:100%;padding:13px 12px;border:1.5px solid var(--bd);border-radius:10px;background:#fff;font-size:17px;display:flex;align-items:center;justify-content:space-between;text-align:left;cursor:pointer;color:var(--tx)}
 .dbtn .cico{font-size:18px}
 .calov{z-index:40;align-items:center}
 .sheet.cal{border-radius:18px;max-width:360px;margin:0 12px}
@@ -387,7 +387,7 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
   var LS_STATE = 'pcapp_state_v1', LS_LOGIN = 'pcapp_login_v1';
   var CLASSES_COMB = ['MOBILIZAÇÃO', 'DESLOCAMENTO', 'DESMOBILIZAÇÃO'];
   var CLASSES_HOSP = ['HOSP. 01 PESSOA', 'HOSP. 02 PESSOAS', 'HOSP. 03 PESSOAS', 'HOSP. 04 PESSOAS'];
-  var SUG_DIV = ['PEDÁGIO', 'PAPELARIA', 'ESTACIONAMENTO', 'LAVANDERIA', 'CÓPIA DE CHAVE', 'MATERIAL'];
+  var SUG_DIV = ['PEDÁGIO', 'PAPELARIA', 'ESTACIONAMENTO'];
   var TIPOS_REC = ['DEPÓSITO CAJU', 'PIX', 'DINHEIRO'];
   var CAT = { DIA: { n: 'Diária', ic: '📅' }, COMB: { n: 'Combustível', ic: '⛽' }, HOSP: { n: 'Hospedagem', ic: '🏨' }, DIV: { n: 'Diversas', ic: '🧾' } };
   var DSEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -812,7 +812,9 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
       if (g.cat === 'DIV') b += '<label class="f">O que foi</label><input class="i" id="g_desc" value="' + h(g.classe || '') + '" placeholder="Ex.: Pedágio" oninput="A.gSet(\'classe\',this.value)"><div class="chips" style="margin-top:8px">' + SUG_DIV.map(function (c) { return '<button class="chip" onclick="A.gSet(\'classe\',\'' + c + '\',true)">' + c.charAt(0) + c.slice(1).toLowerCase() + '</button>'; }).join('') + '</div>';
       b += '<div class="row"><div><label class="f">Valor (R$)</label><input class="i" id="g_val" inputmode="decimal" placeholder="0,00" value="' + h(g.valorTxt || '') + '" oninput="A.gSet(\'valorTxt\',this.value)"></div>' +
         '<div><label class="f">Data</label>' + dateField('g_data', g.data, 'gSet', ['data']) + '</div></div>' +
-        '<label class="btn sec" style="text-align:center">📷 ' + (s.prev || g.foto || g.asset ? 'Trocar foto da nota' : 'Tirar foto da nota') + '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="A.gFoto(this.files[0])"></label>' +
+        '<label class="f">' + (s.prev || g.foto || g.asset ? 'Trocar foto da nota' : 'Foto da nota') + '</label><div class="row">' +
+        '<label class="btn sec" style="text-align:center;margin-top:0">📷 Tirar foto<input type="file" accept="image/*" capture="environment" style="display:none" onchange="A.gFoto(this.files[0])"></label>' +
+        '<label class="btn sec" style="text-align:center;margin-top:0">🖼️ Da galeria<input type="file" accept="image/*" style="display:none" onchange="A.gFoto(this.files[0])"></label></div>' +
         (s.prev ? '<img class="foto" src="' + s.prev + '" alt="">' : ((g.foto || g.asset) ? '<img class="foto" data-g="' + g.id + '" style="display:none" alt="">' : '')) +
         '<div class="err" id="g_err"></div>' +
         '<button class="btn vd" onclick="A.gSalvar()">Salvar</button>' +
