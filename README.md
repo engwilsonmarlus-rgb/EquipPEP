@@ -15,12 +15,12 @@ As planilhas saem dos modelos originais da empresa. O app só preenche os campos
 
 | Tela | O que tem |
 |---|---|
-| **Início** | Dois saldos separados: **Saldo** (recebido − gastos, sem diárias) e **Diárias** do mês; abaixo, o resultado da prestação (saldo − diárias), semana em andamento e últimos lançamentos |
+| **Início** | **Saldo − Diárias** (azul), **Diárias** lançadas desde o último depósito (laranja, zera a cada depósito confirmado) e o saldo do mês sem diárias; semana em andamento e últimos lançamentos |
 | **Nova previsão** | Período (sábado a sexta, editável), local, equipe (1 a 4 pessoas, só nome), combustível (200 L × R$ 7,00 por padrão). Calcula total e depósito de cada um, descontando o saldo da prestação. Em "Mais opções": hospedagem, despesas diversas, km, projeto e cliente |
-| **Lançar gasto** | Diária / Meia diária, Combustível (Mobilização, Deslocamento, Desmobilização), Hospedagem (1 a 4 pessoas) e Diversas, com foto da nota |
+| **Lançar gasto** | Abre em Diária (padrão) / Meia diária, Combustível (Mobilização, Deslocamento, Desmobilização), Hospedagem (1 a 4 pessoas) e Diversas, com foto da nota |
 | **Recebi dinheiro** | Depósito Caju, PIX ou Dinheiro |
 | **Prestação** | Mês a mês: recebimentos, dias com diária e gastos. Baixa a planilha PCEM e um PDF com as fotos das notas |
-| **Ajustes** | Nome do líder, saldo inicial, backup e restauração (inclui as fotos) |
+| **Ajustes** | Nome do líder, saldo inicial, backup e restauração (inclui as fotos), Sair e **Zerar tudo** (com aviso de confirmação) |
 
 Regras de cálculo (iguais às planilhas):
 
