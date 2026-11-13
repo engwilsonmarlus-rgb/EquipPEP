@@ -20,7 +20,11 @@ header.top .sync{font-size:12px;opacity:.85}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:12px 0}
 .saldo{background:linear-gradient(135deg,var(--az),var(--az2));color:#fff;border:0}
 .saldo .lbl{opacity:.85;font-size:14px}.saldo .val{font-size:34px;font-weight:700;margin:4px 0}
-.saldo .semd{font-size:15px;font-weight:600;opacity:.9;white-space:nowrap}
+.saldos{margin-top:12px}.saldos .card{margin:0}
+.saldos .val{font-size:24px}
+.saldo.dia{background:linear-gradient(135deg,#b4610c,var(--lar))}
+.fech{display:flex;justify-content:space-between;align-items:center;padding:12px 14px}
+.fech b{font-size:18px}
 .saldo .sub{font-size:13px;opacity:.9}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .big{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:92px;border-radius:14px;border:1px solid var(--bd);background:#fff;font-weight:600;color:var(--tx);cursor:pointer;padding:10px;text-align:center}
@@ -638,11 +642,23 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
   function itemRec(r) {
     return '<div class="it" onclick="A.receb(\'' + r.id + '\')" style="cursor:pointer"><span class="ib">💵</span><div class="tt"><b>' + h(r.tipo) + '</b><span class="muted">' + dBR(r.data) + '</span></div><span class="vv pos">+' + money(r.valor) + '</span></div>';
   }
+  function qtdDiarias(ini, fim) {
+    var nD = 0, nM = 0;
+    Object.keys(st.diarias).forEach(function (d) { if (d >= ini && d <= fim) { if (st.diarias[d] === 'DIÁRIA') nD++; else if (st.diarias[d] === 'MEIA DIÁRIA') nM++; } });
+    var t = [nD ? nD + (nD > 1 ? ' diárias' : ' diária') : '', nM ? nM + (nM > 1 ? ' meias' : ' meia') : ''].filter(Boolean).join(' + ');
+    return t || 'nenhuma lançada';
+  }
   function vHome() {
     var hj = hoje();
     var ano = +hj.slice(0, 4), mes = +hj.slice(5, 7), P = C.montarPrestacao(st, ano, mes);
-    var b = '<div class="card saldo"><div class="lbl">Saldo do mês (recebido − gasto)</div><div class="val">' + money(P.saldo) + ' <span class="semd">(sem diárias: ' + money(C.r2(P.saldo + P.tot.dia)) + ')</span></div>' +
-      '<div class="sub">' + C.MESES[mes - 1].charAt(0) + C.MESES[mes - 1].slice(1).toLowerCase() + ': recebido ' + money(P.recebido) + ' · gasto ' + money(P.despesas) + '</div></div>';
+    var mesN = C.MESES[mes - 1].charAt(0) + C.MESES[mes - 1].slice(1).toLowerCase();
+    var gastoSemD = C.r2(P.tot.comb + P.tot.hosp + P.tot.div), saldoSemD = C.r2(P.recebido - gastoSemD);
+    var b = '<div class="grid2 saldos">' +
+      '<div class="card saldo"><div class="lbl">Saldo</div><div class="val">' + money(saldoSemD) + '</div>' +
+      '<div class="sub">recebido ' + money(P.recebido) + '<br>gastos ' + money(gastoSemD) + '</div></div>' +
+      '<div class="card saldo dia" onclick="A.go(\'prest\')" style="cursor:pointer"><div class="lbl">Diárias</div><div class="val">' + money(P.tot.dia) + '</div>' +
+      '<div class="sub">' + qtdDiarias(P.ini, P.fim) + '</div></div></div>' +
+      '<div class="card fech"><span>' + mesN + ': saldo − diárias</span><b>' + money(P.saldo) + '</b></div>';
     var pv = (st.previsoes || []).filter(function (p) { return p.fim >= hj; }).sort(function (a, b) { return a.ini < b.ini ? -1 : 1; })[0];
     if (pv) {
       var c = C.calcPrevisao(pv, pv.saldoUsado);
@@ -758,7 +774,7 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
         var chip = '<button class="dchip ' + (di === 'DIÁRIA' ? 'd' : di === 'MEIA DIÁRIA' ? 'm' : '') + '" onclick="A.ciclaDiaria(\'' + d + '\')">' + (di === 'DIÁRIA' ? 'Diária R$ 60' : di === 'MEIA DIÁRIA' ? 'Meia R$ 30' : 'Sem diária') + '</button>';
         var gs = st.gastos.filter(function (g) { return g.data === d; });
         return '<div class="day">' + DSEM[C.weekday(d)] + ' ' + dCurto(d) + ' ' + chip + '</div><div class="list">' + gs.map(itemGasto).join('') + '</div>';
-      }).join('') : '<p class="muted" style="margin:0">Nenhum dia com diária ou gasto. As diárias aparecem sozinhas quando você cria uma previsão.</p>') +
+      }).join('') : '<p class="muted" style="margin:0">Nenhum dia com diária ou gasto. Lance as diárias em Lançar gasto → Diária.</p>') +
       '<div class="row"><button class="btn sec" onclick="A.gasto()">+ Gasto</button><button class="btn sec" onclick="A.addDiaria()">+ Diária</button></div></div>';
     return shell(b);
   }
@@ -787,7 +803,7 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
         var dOpts = [['DIÁRIA', 'Diária R$ 60'], ['MEIA DIÁRIA', 'Meia R$ 30'], ['NENHUMA', 'Sem diária']];
         b += '<label class="f">Dia</label>' + dateField('g_dia', g.data, 'gDiaData') + '' +
           '<label class="f">Diária desse dia</label><div class="chips">' + dOpts.map(function (o) { return '<button class="chip ' + (g.classe === o[0] ? 'on' : '') + '" onclick="A.gSet(\'classe\',\'' + o[0] + '\',true)">' + o[1] + '</button>'; }).join('') + '</div>' +
-          '<p class="muted">As diárias da semana já entram sozinhas quando você cria a previsão. Use aqui para ajustar um dia.</p>' +
+          
           '<button class="btn vd" onclick="A.gSalvarDiaria()">Salvar</button><button class="btn sec" onclick="A.fechar()">Cancelar</button>';
         return '<div class="ov" onclick="if(event.target===this)A.fechar()"><div class="sheet">' + b + '</div></div>';
       }
@@ -881,7 +897,6 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
       if (!p.local) return toast('Digite o local');
       if (p.equipe.some(function (n) { return !n; })) return toast('Preencha o nome de todos da equipe');
       p.id = uid(); p.criado = Date.now(); p.upd = Date.now(); p.criadoDia = hoje(); p.saldoUsado = C.saldoAte(st, p.ini); p.depositoRecebido = false;
-      for (var d = p.ini; d <= p.fim; d = C.addDays(d, 1)) if (!st.diarias[d]) setDiaria(d, 'DIÁRIA');
       st.previsoes.push(p); save();
       view = 'prevs'; render();
       await A.baixarPrev(p.id);
@@ -901,9 +916,8 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
       sheet = { tipo: 'receb', edit: false, depDe: id, r: { id: uid(), tipo: 'DEPÓSITO CAJU', valorTxt: fmtNum(c.dep1), data: hoje() } }; rerenderSheet();
     },
     excluirPrev: function (id) {
-      confirmar('Excluir previsão?', 'As diárias desse período também saem da prestação. Os gastos lançados continuam.', 'Excluir', function () {
+      confirmar('Excluir previsão?', 'Os gastos e diárias lançados continuam na prestação.', 'Excluir', function () {
         var p = st.previsoes.find(function (x) { return x.id === id; }); if (!p) return;
-        for (var d = p.ini; d <= p.fim; d = C.addDays(d, 1)) if (st.diarias[d]) setDiaria(d, null);
         apagar('previsoes', id); save(); render();
       });
     },

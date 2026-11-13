@@ -15,7 +15,7 @@ As planilhas saem dos modelos originais da empresa. O app só preenche os campos
 
 | Tela | O que tem |
 |---|---|
-| **Início** | Saldo do mês (recebido − gasto), saldo sem diárias, semana em andamento, últimos lançamentos e soma das diárias |
+| **Início** | Dois saldos separados: **Saldo** (recebido − gastos, sem diárias) e **Diárias** do mês; abaixo, o resultado da prestação (saldo − diárias), semana em andamento e últimos lançamentos |
 | **Nova previsão** | Período (sábado a sexta, editável), local, equipe (1 a 4 pessoas, só nome), combustível (200 L × R$ 7,00 por padrão). Calcula total e depósito de cada um, descontando o saldo da prestação. Em "Mais opções": hospedagem, despesas diversas, km, projeto e cliente |
 | **Lançar gasto** | Diária / Meia diária, Combustível (Mobilização, Deslocamento, Desmobilização), Hospedagem (1 a 4 pessoas) e Diversas, com foto da nota |
 | **Recebi dinheiro** | Depósito Caju, PIX ou Dinheiro |
@@ -27,7 +27,7 @@ Regras de cálculo (iguais às planilhas):
 - Diária R$ 60,00, meia diária R$ 30,00 e hospedagem R$ 120,00 por pessoa.
 - Depósito do líder = total da previsão − diárias dos outros colaboradores − saldo da prestação.
 - Os outros colaboradores recebem só as próprias diárias.
-- As diárias da semana entram sozinhas na prestação quando a previsão é criada.
+- As diárias são lançadas pelo líder em **Lançar gasto → Diária** (não entram sozinhas pela previsão).
 - A assinatura sai sempre como **TERESINA-PI, data do dia**.
 
 ---
