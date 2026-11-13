@@ -1,6 +1,7 @@
 (function () {
   'use strict';
   var C = window.Core;
+  var VERSAO = 'V 1.0';
   var USER = 'admin0000', PASS = 'admin0000'; // login provisório da fase de teste
   var LS_STATE = 'pcapp_state_v1', LS_LOGIN = 'pcapp_login_v1';
   var CLASSES_COMB = ['MOBILIZAÇÃO', 'DESLOCAMENTO', 'DESMOBILIZAÇÃO'];
@@ -356,6 +357,7 @@
     var itDia = (nD || nM) ? '<div class="it" onclick="A.go(\'prest\')" style="cursor:pointer"><span class="ib">📅</span><div class="tt"><b>Diárias de ' + C.MESES[mes - 1].charAt(0) + C.MESES[mes - 1].slice(1).toLowerCase() + '</b><span class="muted">' +
       [nD ? nD + (nD > 1 ? ' diárias' : ' diária') : '', nM ? nM + (nM > 1 ? ' meias' : ' meia') : ''].filter(Boolean).join(' + ') + '</span></div><span class="vv neg">-' + money(P.tot.dia) + '</span></div>' : '';
     b += '<h3>Últimos lançamentos</h3><div class="card list">' + itDia + (ult.length ? ult.map(function (x) { return x.t === 'g' ? itemGasto(x.o) : itemRec(x.o); }).join('') : (itDia ? '' : '<p class="muted" style="margin:0">Nada lançado ainda.</p>')) + '</div>';
+    b += '<p class="muted versao">EquipPEP ' + VERSAO + '</p>';
     return shell(b);
   }
 

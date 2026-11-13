@@ -83,6 +83,7 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
 .cd{height:42px;border-radius:10px;border:0;background:#f3f5f9;cursor:pointer;font-weight:600;color:var(--tx)}
 .cd.hj{outline:2px solid var(--lar)}
 .cd.sel{background:var(--az);color:#fff}
+.versao{text-align:center;font-size:12px;margin:18px 0 0}
 .banner{background:#fff3e2;border:1px solid #f6d2a6;color:#7a4508;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
 </style>
 </head>
@@ -383,6 +384,7 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
 <script>(function () {
   'use strict';
   var C = window.Core;
+  var VERSAO = 'V 1.0';
   var USER = 'admin0000', PASS = 'admin0000'; // login provisório da fase de teste
   var LS_STATE = 'pcapp_state_v1', LS_LOGIN = 'pcapp_login_v1';
   var CLASSES_COMB = ['MOBILIZAÇÃO', 'DESLOCAMENTO', 'DESMOBILIZAÇÃO'];
@@ -738,6 +740,7 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
     var itDia = (nD || nM) ? '<div class="it" onclick="A.go(\'prest\')" style="cursor:pointer"><span class="ib">📅</span><div class="tt"><b>Diárias de ' + C.MESES[mes - 1].charAt(0) + C.MESES[mes - 1].slice(1).toLowerCase() + '</b><span class="muted">' +
       [nD ? nD + (nD > 1 ? ' diárias' : ' diária') : '', nM ? nM + (nM > 1 ? ' meias' : ' meia') : ''].filter(Boolean).join(' + ') + '</span></div><span class="vv neg">-' + money(P.tot.dia) + '</span></div>' : '';
     b += '<h3>Últimos lançamentos</h3><div class="card list">' + itDia + (ult.length ? ult.map(function (x) { return x.t === 'g' ? itemGasto(x.o) : itemRec(x.o); }).join('') : (itDia ? '' : '<p class="muted" style="margin:0">Nada lançado ainda.</p>')) + '</div>';
+    b += '<p class="muted versao">EquipPEP ' + VERSAO + '</p>';
     return shell(b);
   }
 
