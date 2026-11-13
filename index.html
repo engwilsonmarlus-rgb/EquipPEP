@@ -671,6 +671,14 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
   function itemRec(r) {
     return '<div class="it" onclick="A.receb(\'' + r.id + '\')" style="cursor:pointer"><span class="ib">💵</span><div class="tt"><b>' + h(r.tipo) + '</b><span class="muted">' + dBR(r.data) + '</span></div><span class="vv pos">+' + money(r.valor) + '</span></div>';
   }
+  /* recebimento ligado à confirmação de depósito de uma previsão */
+  function depDaPrev(p) {
+    var r = st.recebidos.find(function (x) { return x.prevId === p.id; });
+    if (r || !p.depositoRecebido) return r || null;
+    var c = C.calcPrevisao(p, p.saldoUsado); // registros antigos, sem ligação
+    return st.recebidos.filter(function (x) { return !x.prevId && x.tipo === 'DEPÓSITO CAJU' && Math.abs(Number(x.valor) - c.dep1) < 0.005 && (x.criado || 0) >= (p.criado || 0); })
+      .sort(function (x, y) { return (y.criado || 0) - (x.criado || 0); })[0] || null;
+  }
   /* diárias lançadas depois do último depósito confirmado (zera a cada novo depósito) */
   function ultimoReceb() {
     return st.recebidos.slice().sort(function (x, y) { return (y.criado || 0) - (x.criado || 0); })[0] || null;
@@ -710,7 +718,7 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
       var c = C.calcPrevisao(pv, pv.saldoUsado);
       b += '<div class="card"><div class="muted">' + (pv.ini <= hj ? 'Semana em andamento' : 'Próxima semana') + '</div><b>' + dCurto(pv.ini) + ' a ' + dCurto(pv.fim) + ' · ' + h(pv.local) + '</b>' +
         '<div class="muted">' + pv.equipe.map(h).join(', ') + '</div>' +
-        (pv.depositoRecebido ? '<div class="muted" style="margin-top:6px">✅ Depósito recebido</div>' :
+        (pv.depositoRecebido ? '<div class="muted" style="margin-top:6px;display:flex;align-items:center;justify-content:space-between">✅ Depósito recebido <button class="dchip" onclick="A.desfazerDep(\'' + pv.id + '\')">Desfazer</button></div>' :
           (c.dep1 > 0 ? '<button class="btn sec" onclick="A.recebiDep(\'' + pv.id + '\')">Recebi o depósito de ' + money(c.dep1) + '</button>' : '')) + '</div>';
     }
     b += '<div class="grid2">' +
@@ -788,7 +796,7 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
       var c = C.calcPrevisao(p, p.saldoUsado);
       return '<div class="card"><b>' + dCurto(p.ini) + ' a ' + dCurto(p.fim) + ' · ' + h(p.local) + '</b><div class="muted">' + p.equipe.map(h).join(', ') + '</div>' +
         '<div class="sum"><span>Total</span><b>' + money(c.total) + '</b></div><div class="sum"><span>Seu depósito</span><b>' + (c.dep1 > 0 ? money(c.dep1) : '—') + '</b></div>' +
-        (p.depositoRecebido ? '<div class="muted">✅ Depósito recebido</div>' : (c.dep1 > 0 ? '<button class="btn sec" onclick="A.recebiDep(\'' + p.id + '\')">Recebi o depósito</button>' : '')) +
+        (p.depositoRecebido ? '<div class="muted" style="display:flex;align-items:center;justify-content:space-between">✅ Depósito recebido <button class="dchip" onclick="A.desfazerDep(\'' + p.id + '\')">Desfazer</button></div>' : (c.dep1 > 0 ? '<button class="btn sec" onclick="A.recebiDep(\'' + p.id + '\')">Recebi o depósito</button>' : '')) +
         '<div class="row"><button class="btn" onclick="A.baixarPrev(\'' + p.id + '\')">⬇️ Planilha</button><button class="btn vm" onclick="A.excluirPrev(\'' + p.id + '\')">Excluir</button></div></div>';
     }).join('') : '<p class="muted">Nenhuma previsão ainda.</p>';
     return shell(b);
@@ -964,9 +972,21 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
       sheet = { tipo: 'receb', edit: false, depDe: id, r: { id: uid(), tipo: 'DEPÓSITO CAJU', valorTxt: fmtNum(c.dep1), data: hoje() } }; rerenderSheet();
     },
     excluirPrev: function (id) {
-      confirmar('Excluir previsão?', 'Os gastos e diárias lançados continuam na prestação.', 'Excluir', function () {
+      var p0 = st.previsoes.find(function (x) { return x.id === id; }); if (!p0) return;
+      var dep0 = depDaPrev(p0);
+      confirmar('Excluir previsão?', (dep0 ? 'O depósito confirmado dessa previsão (' + money(dep0.valor) + ') também será excluído. ' : '') + 'Os gastos e diárias lançados continuam na prestação.', 'Excluir', function () {
         var p = st.previsoes.find(function (x) { return x.id === id; }); if (!p) return;
-        apagar('previsoes', id); save(); render();
+        var dep = depDaPrev(p); if (dep) apagar('recebidos', dep.id);
+        apagar('previsoes', id); save(); render(); toast('Previsão excluída' + (dep ? ' e depósito desfeito' : ''));
+      });
+    },
+    desfazerDep: function (id) {
+      var p0 = st.previsoes.find(function (x) { return x.id === id; }); if (!p0) return;
+      var dep0 = depDaPrev(p0);
+      confirmar('Desfazer confirmação?', dep0 ? 'O recebimento de ' + money(dep0.valor) + ' em ' + dBR(dep0.data) + ' será excluído e o saldo volta ao que era.' : 'A previsão volta para "depósito não recebido".', 'Desfazer', function () {
+        var p = st.previsoes.find(function (x) { return x.id === id; }); if (!p) return;
+        var dep = depDaPrev(p); if (dep) apagar('recebidos', dep.id);
+        p.depositoRecebido = false; p.upd = Date.now(); save(); render(); toast('Confirmação desfeita');
       });
     },
 
@@ -1025,6 +1045,7 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
       var r = sheet.r, v = num(r.valorTxt);
       if (!(v > 0)) { $('#r_err').textContent = 'Digite o valor'; return; }
       var obj = { id: r.id, tipo: r.tipo, valor: C.r2(v), data: r.data, criado: r.criado || Date.now(), upd: Date.now() };
+      if (sheet.depDe || r.prevId) obj.prevId = sheet.depDe || r.prevId;
       var i = st.recebidos.findIndex(function (x) { return x.id === obj.id; });
       if (i >= 0) st.recebidos[i] = obj; else st.recebidos.push(obj);
       if (sheet.depDe) { var p = st.previsoes.find(function (x) { return x.id === sheet.depDe; }); if (p) { p.depositoRecebido = true; p.upd = Date.now(); } }
@@ -1032,7 +1053,12 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
     },
     rExcluir: function () {
       var id = sheet.r.id;
-      confirmar('Excluir recebimento?', 'Esse valor sai da prestação.', 'Excluir', function () { apagar('recebidos', id); save(); render(); });
+      confirmar('Excluir recebimento?', 'Esse valor sai da prestação.', 'Excluir', function () {
+        var r = st.recebidos.find(function (x) { return x.id === id; });
+        var p = r && st.previsoes.find(function (x) { return (r.prevId && x.id === r.prevId) || (!r.prevId && x.depositoRecebido && depDaPrev(x) === r); });
+        apagar('recebidos', id); if (p) { p.depositoRecebido = false; p.upd = Date.now(); }
+        save(); render();
+      });
     },
 
     /* diárias */
