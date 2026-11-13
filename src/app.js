@@ -33,7 +33,7 @@
   function slug(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, ''); }
 
   /* ---------- estado ---------- */
-  function blank() { return { v: 1, updatedAt: 0, apagados: {}, diariasUpd: {}, perfilUpd: 0, perfil: { nome: '', codigo: '', cidade: 'TERESINA-PI' }, saldoInicial: null, recebidos: [], gastos: [], diarias: {}, previsoes: [] }; }
+  function blank() { return { v: 1, updatedAt: 0, resetAt: 0, apagados: {}, diariasUpd: {}, perfilUpd: 0, perfil: { nome: '', codigo: '', cidade: 'TERESINA-PI' }, saldoInicial: null, recebidos: [], gastos: [], diarias: {}, previsoes: [] }; }
   function load() { try { var s = JSON.parse(lsGet(LS_STATE)); if (s && s.v) return Object.assign(blank(), s); } catch (e) { } return blank(); }
   var st = load(); st.perfil.codigo = ''; st.perfil.cidade = 'TERESINA-PI';
   function save() {
@@ -46,6 +46,7 @@
   function merge(a, b) {
     a = Object.assign(blank(), a); b = Object.assign(blank(), b);
     var out = blank(), ap = Object.assign({}, a.apagados || {});
+    var rz = out.resetAt = Math.max(a.resetAt || 0, b.resetAt || 0); // "zerar tudo": descarta o que é anterior
     Object.keys(b.apagados || {}).forEach(function (k) { ap[k] = Math.max(ap[k] || 0, b.apagados[k]); });
     out.apagados = ap;
     ['gastos', 'recebidos', 'previsoes'].forEach(function (L) {
@@ -55,19 +56,22 @@
         if (!cur) ord.push(x.id);
         if (!cur || u > (cur.upd || cur.criado || 0)) m[x.id] = x;
       });
-      out[L] = ord.map(function (k) { return m[k]; }).filter(function (x) { return !ap[x.id]; });
+      out[L] = ord.map(function (k) { return m[k]; }).filter(function (x) { return !ap[x.id] && (!rz || (x.upd || x.criado || 0) > rz); });
     });
     var ad = a.diariasUpd || {}, bd = b.diariasUpd || {}, dv = {}, du = {}, ds = {};
     [a.diarias || {}, b.diarias || {}, ad, bd].forEach(function (o) { Object.keys(o).forEach(function (k) { ds[k] = 1; }); });
     Object.keys(ds).sort().forEach(function (d) {
       var ua = ad[d] || 0, ub = bd[d] || 0;
+      if (rz && Math.max(ua, ub) <= rz) return;
       if (!ua && !ub) { var v0 = (a.diarias || {})[d] || (b.diarias || {})[d]; if (v0) dv[d] = v0; return; }
       var v = (ub > ua ? b : a).diarias[d]; if (v) dv[d] = v; du[d] = Math.max(ua, ub);
     });
     out.diarias = dv; out.diariasUpd = du;
     var pa = a.perfilUpd || 0, pb = b.perfilUpd || 0, ps = pb > pa ? b : a;
     if (pa === pb && !(a.perfil && a.perfil.nome) && b.perfil && b.perfil.nome) ps = b;
-    out.perfil = ps.perfil; out.saldoInicial = ps.saldoInicial; out.perfilUpd = Math.max(pa, pb);
+    if (rz && Math.max(pa, pb) <= rz) { out.perfilUpd = rz; }
+    else { out.perfil = ps.perfil; out.saldoInicial = ps.saldoInicial; out.perfilUpd = Math.max(pa, pb); }
+    Object.keys(out.apagados).forEach(function (k) { if (rz && out.apagados[k] <= rz) delete out.apagados[k]; });
     out.updatedAt = Math.max(a.updatedAt || 0, b.updatedAt || 0);
     return out;
   }
@@ -459,6 +463,7 @@
       '<button class="btn sec" onclick="A.backup()">⬇️ Baixar backup</button>' +
       '<label class="btn sec" style="text-align:center">⬆️ Restaurar backup<input type="file" accept=".json,application/json" style="display:none" onchange="A.restaurar(this.files[0])"></label></div>' +
       '<button class="btn vm" onclick="A.sair()">Sair</button>' +
+      '<button class="btn vm" style="background:#c0392b;color:#fff" onclick="A.zerar()">🗑️ Zerar tudo</button>' +
       '<p class="muted" style="text-align:center;margin-top:16px">Versão de teste · login provisório</p>';
     return shell(b);
   }
@@ -547,6 +552,15 @@
       var u = $('#lu').value.trim(), p = $('#lp').value;
       if (u === USER && p === PASS) { logged = true; lsSet(LS_LOGIN, '1'); view = 'home'; render(); }
       else $('#le').textContent = 'Usuário ou senha incorretos';
+    },
+    zerar: function () {
+      confirmar('Zerar tudo?', 'Isso apaga TODOS os dados do app: previsões, gastos, diárias, recebimentos, fotos das notas, saldo inicial e seu nome. Não dá para desfazer. Se quiser guardar uma cópia, cancele e use "Baixar backup" antes.', 'Sim, zerar tudo', async function () {
+        var ids = st.gastos.map(function (g) { return g.foto; }).filter(Boolean);
+        for (var i = 0; i < ids.length; i++) await fotoDel(ids[i]);
+        var t = Date.now(); st = blank(); st.resetAt = t; st.perfilUpd = t; st.updatedAt = t;
+        lsSet(LS_STATE, JSON.stringify(st)); cloudPush();
+        view = 'home'; hist = []; mesSel = null; fp = null; render(); toast('Tudo zerado');
+      });
     },
     sair: function () { logged = false; lsDel(LS_LOGIN); render(); },
     setup: function () {
@@ -740,7 +754,10 @@
         var j = JSON.parse(await file.text()); if (!j || !j.st || !j.st.v) throw 0;
         confirmar('Restaurar backup?', 'Os lançamentos do backup serão juntados aos que já estão no app.', 'Restaurar', async function () {
           for (var k in (j.fotos || {})) { var b = await (await fetch(j.fotos[k])).blob(); await fotoPut(k, b); }
-          st = Object.assign(blank(), j.st); save(); view = 'home'; render(); toast('Backup restaurado');
+          var t = Date.now(), b = Object.assign(blank(), j.st); // marca como novo para valer mesmo depois de "zerar tudo"
+          ['gastos', 'recebidos', 'previsoes'].forEach(function (L) { (b[L] || []).forEach(function (x) { x.upd = t; }); });
+          Object.keys(b.diarias || {}).forEach(function (d) { b.diariasUpd[d] = t; }); b.perfilUpd = t; b.resetAt = 0; b.apagados = {};
+          st = merge(st, b); save(); view = 'home'; render(); toast('Backup restaurado');
         });
       } catch (e) { toast('Arquivo de backup inválido'); }
     },
