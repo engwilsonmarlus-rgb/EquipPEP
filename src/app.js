@@ -5,7 +5,7 @@
   var LS_STATE = 'pcapp_state_v1', LS_LOGIN = 'pcapp_login_v1';
   var CLASSES_COMB = ['MOBILIZAÇÃO', 'DESLOCAMENTO', 'DESMOBILIZAÇÃO'];
   var CLASSES_HOSP = ['HOSP. 01 PESSOA', 'HOSP. 02 PESSOAS', 'HOSP. 03 PESSOAS', 'HOSP. 04 PESSOAS'];
-  var SUG_DIV = ['PEDÁGIO', 'PAPELARIA', 'ESTACIONAMENTO', 'LAVANDERIA', 'CÓPIA DE CHAVE', 'MATERIAL'];
+  var SUG_DIV = ['PEDÁGIO', 'PAPELARIA', 'ESTACIONAMENTO'];
   var TIPOS_REC = ['DEPÓSITO CAJU', 'PIX', 'DINHEIRO'];
   var CAT = { DIA: { n: 'Diária', ic: '📅' }, COMB: { n: 'Combustível', ic: '⛽' }, HOSP: { n: 'Hospedagem', ic: '🏨' }, DIV: { n: 'Diversas', ic: '🧾' } };
   var DSEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -430,7 +430,9 @@
       if (g.cat === 'DIV') b += '<label class="f">O que foi</label><input class="i" id="g_desc" value="' + h(g.classe || '') + '" placeholder="Ex.: Pedágio" oninput="A.gSet(\'classe\',this.value)"><div class="chips" style="margin-top:8px">' + SUG_DIV.map(function (c) { return '<button class="chip" onclick="A.gSet(\'classe\',\'' + c + '\',true)">' + c.charAt(0) + c.slice(1).toLowerCase() + '</button>'; }).join('') + '</div>';
       b += '<div class="row"><div><label class="f">Valor (R$)</label><input class="i" id="g_val" inputmode="decimal" placeholder="0,00" value="' + h(g.valorTxt || '') + '" oninput="A.gSet(\'valorTxt\',this.value)"></div>' +
         '<div><label class="f">Data</label>' + dateField('g_data', g.data, 'gSet', ['data']) + '</div></div>' +
-        '<label class="btn sec" style="text-align:center">📷 ' + (s.prev || g.foto || g.asset ? 'Trocar foto da nota' : 'Tirar foto da nota') + '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="A.gFoto(this.files[0])"></label>' +
+        '<label class="f">' + (s.prev || g.foto || g.asset ? 'Trocar foto da nota' : 'Foto da nota') + '</label><div class="row">' +
+        '<label class="btn sec" style="text-align:center;margin-top:0">📷 Tirar foto<input type="file" accept="image/*" capture="environment" style="display:none" onchange="A.gFoto(this.files[0])"></label>' +
+        '<label class="btn sec" style="text-align:center;margin-top:0">🖼️ Da galeria<input type="file" accept="image/*" style="display:none" onchange="A.gFoto(this.files[0])"></label></div>' +
         (s.prev ? '<img class="foto" src="' + s.prev + '" alt="">' : ((g.foto || g.asset) ? '<img class="foto" data-g="' + g.id + '" style="display:none" alt="">' : '')) +
         '<div class="err" id="g_err"></div>' +
         '<button class="btn vd" onclick="A.gSalvar()">Salvar</button>' +
