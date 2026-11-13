@@ -187,6 +187,35 @@
       if (g) { var u = await fotoUrl(g); if (u) { imgs[i].src = u; imgs[i].style.display = ''; } }
     }
   }
+  /* PDF escaneado → imagem (pdf.js carregado só quando precisa) */
+  var PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+  var pdfP = null;
+  function loadScript(src) { return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+  function pdfLib() {
+    if (!pdfP) pdfP = loadScript(PDFJS + 'pdf.min.js').then(function () { return loadScript(PDFJS + 'pdf.worker.min.js'); })
+      .then(function () { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js'; return window.pdfjsLib; })
+      .catch(function (e) { pdfP = null; throw e; });
+    return pdfP;
+  }
+  function ehPdf(file) { return file.type === 'application/pdf' || /\.pdf$/i.test(file.name || ''); }
+  async function pdfParaImagem(file) {
+    var lib = await pdfLib();
+    var doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+    var n = Math.min(doc.numPages, 6), cs = [];
+    for (var i = 1; i <= n; i++) {
+      var page = await doc.getPage(i), v0 = page.getViewport({ scale: 1 });
+      var vp = page.getViewport({ scale: Math.min(2, 1600 / Math.max(v0.width, v0.height)) });
+      var c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+      var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise; cs.push(c);
+    }
+    var W = Math.max.apply(null, cs.map(function (c) { return c.width; })), H = cs.reduce(function (s, c) { return s + c.height; }, 0);
+    var k = Math.min(1, 9000 / H), out = document.createElement('canvas');
+    out.width = Math.round(W * k); out.height = Math.round(H * k);
+    var o = out.getContext('2d'), y = 0; o.fillStyle = '#fff'; o.fillRect(0, 0, out.width, out.height);
+    cs.forEach(function (c) { o.drawImage(c, 0, y, c.width * k, c.height * k); y += c.height * k; });
+    return await new Promise(function (r) { out.toBlob(r, 'image/jpeg', 0.8); });
+  }
   async function comprimir(file) {
     var url = URL.createObjectURL(file);
     try {
@@ -432,7 +461,7 @@
         '<div><label class="f">Data</label>' + dateField('g_data', g.data, 'gSet', ['data']) + '</div></div>' +
         '<label class="f">' + (s.prev || g.foto || g.asset ? 'Trocar foto da nota' : 'Foto da nota') + '</label><div class="row">' +
         '<label class="btn sec" style="text-align:center;margin-top:0">📷 Tirar foto<input type="file" accept="image/*" capture="environment" style="display:none" onchange="A.gFoto(this.files[0])"></label>' +
-        '<label class="btn sec" style="text-align:center;margin-top:0">🖼️ Da galeria<input type="file" accept="image/*" style="display:none" onchange="A.gFoto(this.files[0])"></label></div>' +
+        '<label class="btn sec" style="text-align:center;margin-top:0">📁 Galeria ou PDF<input type="file" accept="image/*,application/pdf,.pdf" style="display:none" onchange="A.gFoto(this.files[0])"></label></div>' +
         (s.prev ? '<img class="foto" src="' + s.prev + '" alt="">' : ((g.foto || g.asset) ? '<img class="foto" data-g="' + g.id + '" style="display:none" alt="">' : '')) +
         '<div class="err" id="g_err"></div>' +
         '<button class="btn vd" onclick="A.gSalvar()">Salvar</button>' +
@@ -559,8 +588,9 @@
     gSet: function (k, v, re) { sheet.g[k] = v; if (re) rerenderSheet(); },
     gFoto: async function (file) {
       if (!file) return;
-      try { var b = await comprimir(file); sheet.blob = b; if (sheet.prev) URL.revokeObjectURL(sheet.prev); sheet.prev = URL.createObjectURL(b); rerenderSheet(); }
-      catch (e) { toast('Não consegui abrir essa foto'); }
+      if (ehPdf(file)) toast('Lendo o PDF…');
+      try { var b = ehPdf(file) ? await pdfParaImagem(file) : await comprimir(file); sheet.blob = b; if (sheet.prev) URL.revokeObjectURL(sheet.prev); sheet.prev = URL.createObjectURL(b); rerenderSheet(); }
+      catch (e) { toast(ehPdf(file) ? 'Não consegui ler esse PDF (precisa de internet na 1ª vez)' : 'Não consegui abrir essa imagem'); }
     },
     gSalvar: async function () {
       var g = sheet.g, v = num(g.valorTxt), e = $('#g_err');
