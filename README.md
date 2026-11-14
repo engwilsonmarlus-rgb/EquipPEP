@@ -81,14 +81,14 @@ Não deixe dados pessoais (CPF, conta, PIX) no modelo: o app só usa nomes.
 1. Em **Settings → Pages**, escolha a branch `main` e a pasta `/ (root)`.
 2. O app fica em `https://<usuario>.github.io/EquipPEP/`.
 
-Atenção: no plano gratuito, o Pages só funciona com repositório **público**. Veja o aviso sobre o login abaixo antes de deixar público.
+Atenção: no plano gratuito, o Pages só funciona com repositório **público**.
 
 ---
 
 ## ⚠️ Fase de teste
 
-- O login `admin0000` / `admin0000` é **provisório** e fica escrito no código (`src/app.js`). Ele só serve para separar a tela de entrada e **não protege os dados**.
-- Mantenha o repositório **privado** enquanto esse login existir.
+- O app abre direto, **sem tela de login**. Cada aparelho guarda os próprios dados.
+- Use **Ajustes → Baixar backup** para não perder os dados se trocar ou perder o celular.
 
 ## Próximos passos
 

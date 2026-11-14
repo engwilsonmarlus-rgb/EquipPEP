@@ -2,8 +2,9 @@
   'use strict';
   var C = window.Core;
   var VERSAO = 'V 1.0';
-  var USER = 'admin0000', PASS = 'admin0000'; // login provisório da fase de teste
-  var LS_STATE = 'pcapp_state_v1', LS_LOGIN = 'pcapp_login_v1';
+  /* site de teste (ex.: /TESTEquipPEP/) guarda os dados separados do oficial no mesmo aparelho */
+  var NS = /test/i.test((typeof location !== 'undefined' && location.pathname) || '') ? '_teste' : '';
+  var LS_STATE = 'pcapp_state_v1' + NS, LS_LOGIN = 'pcapp_login_v1' + NS;
   var CLASSES_COMB = ['MOBILIZAÇÃO', 'DESLOCAMENTO', 'DESMOBILIZAÇÃO'];
   var CLASSES_HOSP = ['HOSP. 01 PESSOA', 'HOSP. 02 PESSOAS', 'HOSP. 03 PESSOAS', 'HOSP. 04 PESSOAS'];
   var SUG_DIV = ['PEDÁGIO', 'PAPELARIA', 'ESTACIONAMENTO'];
@@ -81,7 +82,7 @@
     if (e.key !== LS_STATE || !e.newValue) return;
     try { var m = merge(st, JSON.parse(e.newValue)); if (JSON.stringify(m) !== JSON.stringify(st)) { st = m; softRender(); } } catch (x) { }
   });
-  var logged = lsGet(LS_LOGIN) === '1';
+  var logged = true; // sem tela de login: o app abre direto
   var hist = [], view = 'home', mesSel = null, fp = null, sheet = null;
 
   /* ---------- nuvem (conta claude.ai) e downloads ---------- */
@@ -164,7 +165,7 @@
   var idbP = null;
   function idb() {
     if (!idbP) idbP = new Promise(function (res, rej) {
-      try { var r = indexedDB.open('pcapp', 1); r.onupgradeneeded = function () { r.result.createObjectStore('fotos'); }; r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); }; }
+      try { var r = indexedDB.open('pcapp' + NS, 1); r.onupgradeneeded = function () { r.result.createObjectStore('fotos'); }; r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); }; }
       catch (e) { rej(e); }
     });
     return idbP;
@@ -260,18 +261,18 @@
   }
 
   /* ---------- telas ---------- */
+  /* modo noturno (fica salvo neste aparelho) */
+  var LS_TEMA = 'pcapp_tema' + NS;
+  function temaEscuro() { return document.documentElement.getAttribute('data-tema') === 'escuro'; }
+  function aplicarTema(t) { document.documentElement.setAttribute('data-tema', t === 'escuro' ? 'escuro' : 'claro'); }
+  aplicarTema(lsGet(LS_TEMA));
   function shell(body) {
     var tabs = [['home', '🏠', 'Início'], ['prevs', '📝', 'Previsões'], ['prest', '📊', 'Prestação'], ['ajustes', '⚙️', 'Ajustes']];
     var back = view !== 'home' ? '<button class="voltar" onclick="A.voltar()">‹ Voltar</button>' : '';
-    return '<header class="top">' + back + '<h1>EquipPEP</h1><span class="sync" id="sync">' + syncTxt() + '</span></header>' +
+    return '<header class="top">' + back + '<h1>EquipPEP</h1><span class="sync" id="sync">' + syncTxt() + '</span>' +
+      '<button class="tema" title="Modo noturno" aria-label="Alternar modo noturno" onclick="A.tema()">' + (temaEscuro() ? '☀️' : '🌙') + '</button></header>' +
       '<div class="wrap">' + body + '</div>' +
       '<nav class="bot">' + tabs.map(function (t) { return '<button class="' + (view === t[0] ? 'on' : '') + '" onclick="A.go(\'' + t[0] + '\')"><span class="ic">' + t[1] + '</span>' + t[2] + '</button>'; }).join('') + '</nav>';
-  }
-  function vLogin() {
-    return '<div class="login"><div class="logo">💼</div><h2 style="text-align:center">EquipPEP</h2><p class="muted" style="text-align:center">Previsão e prestação de contas · Engemaximo<br>versão de teste</p>' +
-      '<label class="f">Usuário</label><input class="i" id="lu" autocomplete="username" autocapitalize="none">' +
-      '<label class="f">Senha</label><input class="i" id="lp" type="password" autocomplete="current-password">' +
-      '<div class="err" id="le"></div><button class="btn" onclick="A.login()">Entrar</button></div>';
   }
   function vSetup() {
     var ult = C.addDays(hoje().slice(0, 8) + '01', -1);
@@ -357,7 +358,7 @@
     var itDia = (nD || nM) ? '<div class="it" onclick="A.go(\'prest\')" style="cursor:pointer"><span class="ib">📅</span><div class="tt"><b>Diárias de ' + C.MESES[mes - 1].charAt(0) + C.MESES[mes - 1].slice(1).toLowerCase() + '</b><span class="muted">' +
       [nD ? nD + (nD > 1 ? ' diárias' : ' diária') : '', nM ? nM + (nM > 1 ? ' meias' : ' meia') : ''].filter(Boolean).join(' + ') + '</span></div><span class="vv neg">-' + money(P.tot.dia) + '</span></div>' : '';
     b += '<h3>Últimos lançamentos</h3><div class="card list">' + itDia + (ult.length ? ult.map(function (x) { return x.t === 'g' ? itemGasto(x.o) : itemRec(x.o); }).join('') : (itDia ? '' : '<p class="muted" style="margin:0">Nada lançado ainda.</p>')) + '</div>';
-    b += '<p class="muted versao">EquipPEP ' + VERSAO + '</p>';
+    b += '<p class="muted versao">EquipPEP ' + VERSAO + (NS ? ' · AMBIENTE DE TESTE' : '') + '</p>';
     return shell(b);
   }
 
@@ -464,9 +465,8 @@
       '<div class="card"><b>Cópia de segurança</b><p class="muted">' + (cloud.db ? 'Seus lançamentos já ficam salvos na sua conta. ' : '') + 'O backup leva tudo, inclusive as fotos, num arquivo que você pode guardar no Drive ou no WhatsApp.</p>' +
       '<button class="btn sec" onclick="A.backup()">⬇️ Baixar backup</button>' +
       '<label class="btn sec" style="text-align:center">⬆️ Restaurar backup<input type="file" accept=".json,application/json" style="display:none" onchange="A.restaurar(this.files[0])"></label></div>' +
-      '<button class="btn vm" onclick="A.sair()">Sair</button>' +
       '<button class="btn vm" style="background:#c0392b;color:#fff" onclick="A.zerar()">🗑️ Zerar tudo</button>' +
-      '<p class="muted" style="text-align:center;margin-top:16px">Versão de teste · login provisório</p>';
+      '<p class="muted" style="text-align:center;margin-top:16px">Versão de teste</p>';
     return shell(b);
   }
 
@@ -520,7 +520,6 @@
 
   function render() {
     var app = $('#app');
-    if (!logged) { app.innerHTML = vLogin(); bindLogin(); return; }
     if (!st.perfil.nome) { app.innerHTML = vSetup(); return; }
     var body = view === 'prevs' ? vPrevs() : view === 'novaPrev' ? vNovaPrev() : view === 'prest' ? vPrest() : view === 'ajustes' ? vAjustes() : vHome();
     app.innerHTML = body + vSheet();
@@ -530,14 +529,12 @@
     var ov = document.querySelector('.ov'); if (ov) ov.remove();
     if (sheet) { var d = document.createElement('div'); d.innerHTML = vSheet(); document.body.querySelector('#app').appendChild(d.firstChild); hydrateThumbs(); }
   }
-  function bindLogin() {
-    ['#lu', '#lp'].forEach(function (s) { var e = $(s); if (e) e.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') A.login(); }); });
-  }
 
   /* ---------- ações ---------- */
   var confirmCb = null;
   function confirmar(titulo, msg, ok, cb) { sheet = { tipo: 'confirm', titulo: titulo, msg: msg, ok: ok }; confirmCb = cb; rerenderSheet(); }
   var A = window.A = {
+    tema: function () { var t = temaEscuro() ? 'claro' : 'escuro'; aplicarTema(t); lsSet(LS_TEMA, t); render(); },
     cal: function (el) {
       var v = el.dataset.v || hoje();
       cal = { el: el, v: el.dataset.v, y: +v.slice(0, 4), m: +v.slice(5, 7) }; calRender();
@@ -550,11 +547,6 @@
       var fn = el.dataset.fn;
       if (fn && A[fn]) A[fn].apply(null, JSON.parse(el.dataset.pre || '[]').concat([iso]).concat(JSON.parse(el.dataset.post || '[]')));
     },
-    login: function () {
-      var u = $('#lu').value.trim(), p = $('#lp').value;
-      if (u === USER && p === PASS) { logged = true; lsSet(LS_LOGIN, '1'); view = 'home'; render(); }
-      else $('#le').textContent = 'Usuário ou senha incorretos';
-    },
     zerar: function () {
       confirmar('Zerar tudo?', 'Isso apaga TODOS os dados do app: previsões, gastos, diárias, recebimentos, fotos das notas, saldo inicial e seu nome. Não dá para desfazer. Se quiser guardar uma cópia, cancele e use "Baixar backup" antes.', 'Sim, zerar tudo', async function () {
         var ids = st.gastos.map(function (g) { return g.foto; }).filter(Boolean);
@@ -564,7 +556,6 @@
         view = 'home'; hist = []; mesSel = null; fp = null; render(); toast('Tudo zerado');
       });
     },
-    sair: function () { logged = false; lsDel(LS_LOGIN); render(); },
     setup: function () {
       var nome = $('#s_nome').value.trim(); if (!nome) { toast('Digite seu nome'); return; }
       st.perfilUpd = Date.now(); st.perfil = { nome: nome, codigo: '', cidade: 'TERESINA-PI' };

@@ -2,11 +2,15 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="color-scheme" content="light">
+<meta name="color-scheme" content="light dark">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EquipPEP – Previsão e Prestação de Contas</title>
 <style>
-:root{color-scheme:light;--az:#1f4e8c;--az2:#2f6fbf;--lar:#f08a1c;--vd:#2e8b57;--vm:#c0392b;--fd:#f3f5f9;--tx:#1d2433;--mu:#6b7385;--bd:#dde2ea;--card:#fff}
+:root{color-scheme:light;--az:#1f4e8c;--azt:#1f4e8c;--az2:#2f6fbf;--lar:#f08a1c;--vd:#2e8b57;--vm:#c0392b;--fd:#f3f5f9;--tx:#1d2433;--mu:#6b7385;--bd:#dde2ea;--card:#fff;--soft:#f3f5f9;--dep:#fff7ec;--depb:#f6d2a6;--ban:#fff3e2;--bant:#7a4508;--dchd:#e8f0fb;--dchm:#fff3e2;--dchmt:#a25a0b}
+html[data-tema="escuro"]{color-scheme:dark;--azt:#8cb8f2;--vd:#4cc38a;--vm:#ff6b5e;--fd:#0f141c;--tx:#e6eaf2;--mu:#9aa4b5;--bd:#2c3747;--card:#1a2230;--soft:#232d3d;--dep:#2b2316;--depb:#5c4520;--ban:#2b2316;--bant:#f3c27a;--dchd:#1d3150;--dchm:#3a2a14;--dchmt:#f3b46a}
+html[data-tema="escuro"] .toast{background:#e6eaf2;color:#1d2433}
+html[data-tema="escuro"] input::placeholder{color:#6f7a8c;-webkit-text-fill-color:#6f7a8c}
+.tema{border:1.5px solid rgba(255,255,255,.6);background:transparent;color:#fff;border-radius:10px;width:38px;height:36px;font-size:17px;cursor:pointer;flex:none}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--fd);color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
 button,input,select,textarea{font:inherit;color:var(--tx)}
@@ -27,20 +31,20 @@ header.top .sync{font-size:12px;opacity:.85}
 .fech b{font-size:18px}
 .saldo .sub{font-size:13px;opacity:.9}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.big{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:92px;border-radius:14px;border:1px solid var(--bd);background:#fff;font-weight:600;color:var(--tx);cursor:pointer;padding:10px;text-align:center}
+.big{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:92px;border-radius:14px;border:1px solid var(--bd);background:var(--card);font-weight:600;color:var(--tx);cursor:pointer;padding:10px;text-align:center}
 .big .ic{font-size:28px}
 .big:active{transform:scale(.98)}
 .btn{display:block;width:100%;padding:14px;border-radius:12px;border:0;background:var(--az);color:#fff;font-weight:600;cursor:pointer;margin-top:10px}
-.btn.sec{background:#fff;color:var(--az);border:1.5px solid var(--az)}
-.btn.lar{background:var(--lar)}.btn.vd{background:var(--vd)}.btn.vm{background:#fff;color:var(--vm);border:1.5px solid var(--vm)}
+.btn.sec{background:var(--card);color:var(--azt);border:1.5px solid var(--az)}
+.btn.lar{background:var(--lar)}.btn.vd{background:var(--vd)}.btn.vm{background:var(--card);color:var(--vm);border:1.5px solid var(--vm)}
 .btn:disabled{opacity:.5}
 label.f{display:block;font-size:14px;color:var(--mu);margin:12px 0 4px}
-input.i,select.i{width:100%;min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;padding:13px 12px;border:1.5px solid var(--bd);border-radius:10px;background:#fff;font-size:17px}
+input.i,select.i{width:100%;min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;padding:13px 12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);font-size:17px}
 input.i:focus{outline:none;border-color:var(--az2)}
 .row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{padding:11px 14px;border-radius:999px;border:1.5px solid var(--bd);background:#fff;cursor:pointer;font-weight:600;font-size:15px}
-.chip.on{background:var(--az);color:#fff;border-color:var(--az)}
+.chip{padding:11px 14px;border-radius:999px;border:1.5px solid var(--bd);background:var(--card);cursor:pointer;font-weight:600;font-size:15px}
+.chip.on{background:var(--az);color:#fff;border-color:var(--azt)}
 .muted{color:var(--mu);font-size:14px}
 h2{font-size:20px;margin:16px 0 4px}
 h3{font-size:16px;margin:14px 0 6px}
@@ -52,39 +56,39 @@ h3{font-size:16px;margin:14px 0 6px}
 .ib{border:0;background:transparent;font-size:20px;cursor:pointer;padding:6px}
 .sum{display:flex;justify-content:space-between;padding:6px 0}
 .sum.t{border-top:1.5px solid var(--bd);margin-top:6px;padding-top:10px;font-weight:700;font-size:18px}
-.dep{background:#fff7ec;border:1px solid #f6d2a6;border-radius:12px;padding:12px;margin-top:10px}
+.dep{background:var(--dep);border:1px solid var(--depb);border-radius:12px;padding:12px;margin-top:10px}
 .stepper{display:flex;align-items:center;gap:12px}
-.stepper button{width:48px;height:48px;border-radius:12px;border:1.5px solid var(--bd);background:#fff;font-size:24px;cursor:pointer}
+.stepper button{width:48px;height:48px;border-radius:12px;border:1.5px solid var(--bd);background:var(--card);font-size:24px;cursor:pointer}
 .stepper span{font-size:24px;font-weight:700;min-width:30px;text-align:center}
-nav.bot{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--bd);display:flex;justify-content:space-around;padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:5}
+nav.bot{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--bd);display:flex;justify-content:space-around;padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:5}
 nav.bot button{border:0;background:none;display:flex;flex-direction:column;align-items:center;font-size:12px;color:var(--mu);cursor:pointer;padding:4px 10px}
 nav.bot button .ic{font-size:22px}
-nav.bot button.on{color:var(--az);font-weight:700}
+nav.bot button.on{color:var(--azt);font-weight:700}
 .login{max-width:380px;margin:12vh auto;padding:0 18px}
 .login .logo{font-size:44px;text-align:center}
 .err{color:var(--vm);font-size:14px;margin-top:8px;min-height:18px}
 .ov{position:fixed;inset:0;background:rgba(10,20,40,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
-.sheet{background:#fff;width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}
+.sheet{background:var(--card);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1d2433;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:30;max-width:90%}
-.foto{width:100%;max-height:220px;object-fit:contain;border-radius:10px;border:1px solid var(--bd);margin-top:8px;background:#fafafa}
+.foto{width:100%;max-height:220px;object-fit:contain;border-radius:10px;border:1px solid var(--bd);margin-top:8px;background:var(--soft)}
 .thumb{width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid var(--bd)}
 .day{font-weight:700;margin-top:14px;display:flex;align-items:center;gap:8px}
-.dchip{padding:5px 10px;border-radius:999px;font-size:13px;border:1.5px solid var(--bd);background:#fff;cursor:pointer;font-weight:600}
-.dchip.d{background:#e8f0fb;border-color:var(--az2);color:var(--az)}.dchip.m{background:#fff3e2;border-color:var(--lar);color:#a25a0b}
+.dchip{padding:5px 10px;border-radius:999px;font-size:13px;border:1.5px solid var(--bd);background:var(--card);cursor:pointer;font-weight:600}
+.dchip.d{background:var(--dchd);border-color:var(--az2);color:var(--azt)}.dchip.m{background:var(--dchm);border-color:var(--lar);color:var(--dchmt)}
 .mnav{display:flex;align-items:center;gap:10px}.mnav b{flex:1;text-align:center;font-size:18px}
-.mnav button{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--bd);background:#fff;font-size:20px;cursor:pointer}
-details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
-.dbtn{width:100%;padding:13px 12px;border:1.5px solid var(--bd);border-radius:10px;background:#fff;font-size:17px;display:flex;align-items:center;justify-content:space-between;text-align:left;cursor:pointer;color:var(--tx)}
+.mnav button{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--bd);background:var(--card);font-size:20px;cursor:pointer}
+details summary{cursor:pointer;color:var(--azt);font-weight:600;padding:10px 0}
+.dbtn{width:100%;padding:13px 12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);font-size:17px;display:flex;align-items:center;justify-content:space-between;text-align:left;cursor:pointer;color:var(--tx)}
 .dbtn .cico{font-size:18px}
 .calov{z-index:40;align-items:center}
 .sheet.cal{border-radius:18px;max-width:360px;margin:0 12px}
 .cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px;text-align:center}
 .cgrid.cw span{font-size:13px;color:var(--mu);font-weight:700}
-.cd{height:42px;border-radius:10px;border:0;background:#f3f5f9;cursor:pointer;font-weight:600;color:var(--tx)}
+.cd{height:42px;border-radius:10px;border:0;background:var(--soft);cursor:pointer;font-weight:600;color:var(--tx)}
 .cd.hj{outline:2px solid var(--lar)}
 .cd.sel{background:var(--az);color:#fff}
 .versao{text-align:center;font-size:12px;margin:18px 0 0}
-.banner{background:#fff3e2;border:1px solid #f6d2a6;color:#7a4508;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+.banner{background:var(--ban);border:1px solid var(--depb);color:var(--bant);border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
 </style>
 </head>
 <body>
@@ -385,8 +389,9 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
   'use strict';
   var C = window.Core;
   var VERSAO = 'V 1.0';
-  var USER = 'admin0000', PASS = 'admin0000'; // login provisório da fase de teste
-  var LS_STATE = 'pcapp_state_v1', LS_LOGIN = 'pcapp_login_v1';
+  /* site de teste (ex.: /TESTEquipPEP/) guarda os dados separados do oficial no mesmo aparelho */
+  var NS = /test/i.test((typeof location !== 'undefined' && location.pathname) || '') ? '_teste' : '';
+  var LS_STATE = 'pcapp_state_v1' + NS, LS_LOGIN = 'pcapp_login_v1' + NS;
   var CLASSES_COMB = ['MOBILIZAÇÃO', 'DESLOCAMENTO', 'DESMOBILIZAÇÃO'];
   var CLASSES_HOSP = ['HOSP. 01 PESSOA', 'HOSP. 02 PESSOAS', 'HOSP. 03 PESSOAS', 'HOSP. 04 PESSOAS'];
   var SUG_DIV = ['PEDÁGIO', 'PAPELARIA', 'ESTACIONAMENTO'];
@@ -464,7 +469,7 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
     if (e.key !== LS_STATE || !e.newValue) return;
     try { var m = merge(st, JSON.parse(e.newValue)); if (JSON.stringify(m) !== JSON.stringify(st)) { st = m; softRender(); } } catch (x) { }
   });
-  var logged = lsGet(LS_LOGIN) === '1';
+  var logged = true; // sem tela de login: o app abre direto
   var hist = [], view = 'home', mesSel = null, fp = null, sheet = null;
 
   /* ---------- nuvem (conta claude.ai) e downloads ---------- */
@@ -547,7 +552,7 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
   var idbP = null;
   function idb() {
     if (!idbP) idbP = new Promise(function (res, rej) {
-      try { var r = indexedDB.open('pcapp', 1); r.onupgradeneeded = function () { r.result.createObjectStore('fotos'); }; r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); }; }
+      try { var r = indexedDB.open('pcapp' + NS, 1); r.onupgradeneeded = function () { r.result.createObjectStore('fotos'); }; r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); }; }
       catch (e) { rej(e); }
     });
     return idbP;
@@ -643,18 +648,18 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
   }
 
   /* ---------- telas ---------- */
+  /* modo noturno (fica salvo neste aparelho) */
+  var LS_TEMA = 'pcapp_tema' + NS;
+  function temaEscuro() { return document.documentElement.getAttribute('data-tema') === 'escuro'; }
+  function aplicarTema(t) { document.documentElement.setAttribute('data-tema', t === 'escuro' ? 'escuro' : 'claro'); }
+  aplicarTema(lsGet(LS_TEMA));
   function shell(body) {
     var tabs = [['home', '🏠', 'Início'], ['prevs', '📝', 'Previsões'], ['prest', '📊', 'Prestação'], ['ajustes', '⚙️', 'Ajustes']];
     var back = view !== 'home' ? '<button class="voltar" onclick="A.voltar()">‹ Voltar</button>' : '';
-    return '<header class="top">' + back + '<h1>EquipPEP</h1><span class="sync" id="sync">' + syncTxt() + '</span></header>' +
+    return '<header class="top">' + back + '<h1>EquipPEP</h1><span class="sync" id="sync">' + syncTxt() + '</span>' +
+      '<button class="tema" title="Modo noturno" aria-label="Alternar modo noturno" onclick="A.tema()">' + (temaEscuro() ? '☀️' : '🌙') + '</button></header>' +
       '<div class="wrap">' + body + '</div>' +
       '<nav class="bot">' + tabs.map(function (t) { return '<button class="' + (view === t[0] ? 'on' : '') + '" onclick="A.go(\'' + t[0] + '\')"><span class="ic">' + t[1] + '</span>' + t[2] + '</button>'; }).join('') + '</nav>';
-  }
-  function vLogin() {
-    return '<div class="login"><div class="logo">💼</div><h2 style="text-align:center">EquipPEP</h2><p class="muted" style="text-align:center">Previsão e prestação de contas · Engemaximo<br>versão de teste</p>' +
-      '<label class="f">Usuário</label><input class="i" id="lu" autocomplete="username" autocapitalize="none">' +
-      '<label class="f">Senha</label><input class="i" id="lp" type="password" autocomplete="current-password">' +
-      '<div class="err" id="le"></div><button class="btn" onclick="A.login()">Entrar</button></div>';
   }
   function vSetup() {
     var ult = C.addDays(hoje().slice(0, 8) + '01', -1);
@@ -740,7 +745,7 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
     var itDia = (nD || nM) ? '<div class="it" onclick="A.go(\'prest\')" style="cursor:pointer"><span class="ib">📅</span><div class="tt"><b>Diárias de ' + C.MESES[mes - 1].charAt(0) + C.MESES[mes - 1].slice(1).toLowerCase() + '</b><span class="muted">' +
       [nD ? nD + (nD > 1 ? ' diárias' : ' diária') : '', nM ? nM + (nM > 1 ? ' meias' : ' meia') : ''].filter(Boolean).join(' + ') + '</span></div><span class="vv neg">-' + money(P.tot.dia) + '</span></div>' : '';
     b += '<h3>Últimos lançamentos</h3><div class="card list">' + itDia + (ult.length ? ult.map(function (x) { return x.t === 'g' ? itemGasto(x.o) : itemRec(x.o); }).join('') : (itDia ? '' : '<p class="muted" style="margin:0">Nada lançado ainda.</p>')) + '</div>';
-    b += '<p class="muted versao">EquipPEP ' + VERSAO + '</p>';
+    b += '<p class="muted versao">EquipPEP ' + VERSAO + (NS ? ' · AMBIENTE DE TESTE' : '') + '</p>';
     return shell(b);
   }
 
@@ -847,9 +852,8 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
       '<div class="card"><b>Cópia de segurança</b><p class="muted">' + (cloud.db ? 'Seus lançamentos já ficam salvos na sua conta. ' : '') + 'O backup leva tudo, inclusive as fotos, num arquivo que você pode guardar no Drive ou no WhatsApp.</p>' +
       '<button class="btn sec" onclick="A.backup()">⬇️ Baixar backup</button>' +
       '<label class="btn sec" style="text-align:center">⬆️ Restaurar backup<input type="file" accept=".json,application/json" style="display:none" onchange="A.restaurar(this.files[0])"></label></div>' +
-      '<button class="btn vm" onclick="A.sair()">Sair</button>' +
       '<button class="btn vm" style="background:#c0392b;color:#fff" onclick="A.zerar()">🗑️ Zerar tudo</button>' +
-      '<p class="muted" style="text-align:center;margin-top:16px">Versão de teste · login provisório</p>';
+      '<p class="muted" style="text-align:center;margin-top:16px">Versão de teste</p>';
     return shell(b);
   }
 
@@ -903,7 +907,6 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
 
   function render() {
     var app = $('#app');
-    if (!logged) { app.innerHTML = vLogin(); bindLogin(); return; }
     if (!st.perfil.nome) { app.innerHTML = vSetup(); return; }
     var body = view === 'prevs' ? vPrevs() : view === 'novaPrev' ? vNovaPrev() : view === 'prest' ? vPrest() : view === 'ajustes' ? vAjustes() : vHome();
     app.innerHTML = body + vSheet();
@@ -913,14 +916,12 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
     var ov = document.querySelector('.ov'); if (ov) ov.remove();
     if (sheet) { var d = document.createElement('div'); d.innerHTML = vSheet(); document.body.querySelector('#app').appendChild(d.firstChild); hydrateThumbs(); }
   }
-  function bindLogin() {
-    ['#lu', '#lp'].forEach(function (s) { var e = $(s); if (e) e.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') A.login(); }); });
-  }
 
   /* ---------- ações ---------- */
   var confirmCb = null;
   function confirmar(titulo, msg, ok, cb) { sheet = { tipo: 'confirm', titulo: titulo, msg: msg, ok: ok }; confirmCb = cb; rerenderSheet(); }
   var A = window.A = {
+    tema: function () { var t = temaEscuro() ? 'claro' : 'escuro'; aplicarTema(t); lsSet(LS_TEMA, t); render(); },
     cal: function (el) {
       var v = el.dataset.v || hoje();
       cal = { el: el, v: el.dataset.v, y: +v.slice(0, 4), m: +v.slice(5, 7) }; calRender();
@@ -933,11 +934,6 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
       var fn = el.dataset.fn;
       if (fn && A[fn]) A[fn].apply(null, JSON.parse(el.dataset.pre || '[]').concat([iso]).concat(JSON.parse(el.dataset.post || '[]')));
     },
-    login: function () {
-      var u = $('#lu').value.trim(), p = $('#lp').value;
-      if (u === USER && p === PASS) { logged = true; lsSet(LS_LOGIN, '1'); view = 'home'; render(); }
-      else $('#le').textContent = 'Usuário ou senha incorretos';
-    },
     zerar: function () {
       confirmar('Zerar tudo?', 'Isso apaga TODOS os dados do app: previsões, gastos, diárias, recebimentos, fotos das notas, saldo inicial e seu nome. Não dá para desfazer. Se quiser guardar uma cópia, cancele e use "Baixar backup" antes.', 'Sim, zerar tudo', async function () {
         var ids = st.gastos.map(function (g) { return g.foto; }).filter(Boolean);
@@ -947,7 +943,6 @@ details summary{cursor:pointer;color:var(--az);font-weight:600;padding:10px 0}
         view = 'home'; hist = []; mesSel = null; fp = null; render(); toast('Tudo zerado');
       });
     },
-    sair: function () { logged = false; lsDel(LS_LOGIN); render(); },
     setup: function () {
       var nome = $('#s_nome').value.trim(); if (!nome) { toast('Digite seu nome'); return; }
       st.perfilUpd = Date.now(); st.perfil = { nome: nome, codigo: '', cidade: 'TERESINA-PI' };
