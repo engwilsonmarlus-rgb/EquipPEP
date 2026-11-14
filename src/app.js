@@ -77,6 +77,26 @@
     out.updatedAt = Math.max(a.updatedAt || 0, b.updatedAt || 0);
     return out;
   }
+  /* Backup restaurado depois de "Zerar tudo": os horários dos lançamentos precisam ficar
+     depois do zeramento para valer, mas sem perder a ordem entre eles (o quadro de diárias
+     depende de saber o que veio depois de cada depósito). Remapeia todos para (rz, agora]. */
+  function ajustarHorarios(b, rz, agora) {
+    var refs = [];
+    ['gastos', 'recebidos', 'previsoes'].forEach(function (L) {
+      (b[L] || []).forEach(function (x) {
+        if (!x.criado) x.criado = x.upd || 0;
+        if (!x.upd) x.upd = x.criado;
+        refs.push([x, 'criado'], [x, 'upd']);
+      });
+    });
+    Object.keys(b.diarias || {}).forEach(function (d) { if (!b.diariasUpd[d]) b.diariasUpd[d] = 0; refs.push([b.diariasUpd, d]); });
+    if (!b.perfilUpd) b.perfilUpd = 0; refs.push([b, 'perfilUpd']);
+    var vals = refs.map(function (r) { return r[0][r[1]] || 0; });
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    if (!refs.length || min > rz) return; // nada anterior ao zeramento: mantém como está
+    var ini = rz + 1, span = Math.max(1, agora - ini), largura = Math.max(1, max - min);
+    refs.forEach(function (r) { r[0][r[1]] = Math.floor(ini + ((r[0][r[1]] || 0) - min) / largura * span); });
+  }
   function softRender() { if (!sheet && view !== 'novaPrev' && logged) render(); }
   window.addEventListener('storage', function (e) {
     if (e.key !== LS_STATE || !e.newValue) return;
@@ -319,6 +339,18 @@
     var t = [nD ? nD + (nD > 1 ? ' diárias' : ' diária') : '', nM ? nM + (nM > 1 ? ' meias' : ' meia') : ''].filter(Boolean).join(' + ');
     return t || 'nenhuma lançada';
   }
+  /* quanto ainda falta das diárias do líder pagas no último depósito (vindo de uma previsão) */
+  function faltaDiariaTxt(ur, dd) {
+    if (!ur) return '';
+    var p = ur.prevId ? st.previsoes.find(function (x) { return x.id === ur.prevId; })
+      : st.previsoes.find(function (x) { return x.depositoRecebido && depDaPrev(x) === ur; });
+    if (!p) return '';
+    var c = C.calcPrevisao(p, p.saldoUsado), pago = c.L.d1, falta = C.r2(pago - dd.tot);
+    function nd(v) { var n = v / C.DIARIA; return (Math.round(n * 10) / 10).toLocaleString('pt-BR'); }
+    if (falta >= 0) return 'faltam ' + money(falta) + ' de diária<br>(' + nd(falta) + ' de ' + c.dias + ')';
+    var a = -falta;
+    return '<b class="passou">passou ' + money(a) + ' da previsão</b><br>(' + nd(a) + (a > C.DIARIA ? ' diárias' : ' diária') + ' a mais)';
+  }
   function qtdDiarias(ini, fim) {
     var nD = 0, nM = 0;
     Object.keys(st.diarias).forEach(function (d) { if (d >= ini && d <= fim) { if (st.diarias[d] === 'DIÁRIA') nD++; else if (st.diarias[d] === 'MEIA DIÁRIA') nM++; } });
@@ -333,10 +365,10 @@
     var ur = ultimoReceb(), dd = diariasDesde(ur ? (ur.criado || 0) : 0);
     var b = '<div class="grid2 saldos">' +
       '<div class="card saldo"><div class="lbl">Saldo − Diárias</div><div class="val">' + money(P.saldo) + '</div>' +
-      '<div class="sub">diárias do mês ' + money(P.tot.dia) + '</div></div>' +
+      '<div class="sub">' + faltaDiariaTxt(ur, dd) + '</div></div>' +
       '<div class="card saldo dia" onclick="A.go(\'prest\')" style="cursor:pointer"><div class="lbl">Diárias</div><div class="val">' + money(dd.tot) + '</div>' +
       '<div class="sub">' + dd.txt + (ur ? '<br>desde o depósito de ' + dCurto(ur.data) : '') + '</div></div></div>' +
-      '<div class="card fech"><span>' + mesN + ': saldo<br><small class="muted">recebido ' + money(P.recebido) + ' · gastos ' + money(gastoSemD) + '</small></span><b>' + money(saldoSemD) + '</b></div>';
+      '<div class="card fech"><span>' + mesN + ': saldo<br><small class="muted">recebido ' + money(P.recebido) + ' · gastos ' + money(gastoSemD) + ' · diárias do mês ' + money(P.tot.dia) + '</small></span><b>' + money(saldoSemD) + '</b></div>';
     var pv = (st.previsoes || []).filter(function (p) { return p.fim >= hj; }).sort(function (a, b) { return a.ini < b.ini ? -1 : 1; })[0];
     if (pv) {
       var c = C.calcPrevisao(pv, pv.saldoUsado);
@@ -747,9 +779,8 @@
         var j = JSON.parse(await file.text()); if (!j || !j.st || !j.st.v) throw 0;
         confirmar('Restaurar backup?', 'Os lançamentos do backup serão juntados aos que já estão no app.', 'Restaurar', async function () {
           for (var k in (j.fotos || {})) { var b = await (await fetch(j.fotos[k])).blob(); await fotoPut(k, b); }
-          var t = Date.now(), b = Object.assign(blank(), j.st); // marca como novo para valer mesmo depois de "zerar tudo"
-          ['gastos', 'recebidos', 'previsoes'].forEach(function (L) { (b[L] || []).forEach(function (x) { x.upd = t; }); });
-          Object.keys(b.diarias || {}).forEach(function (d) { b.diariasUpd[d] = t; }); b.perfilUpd = t; b.resetAt = 0; b.apagados = {};
+          var b = Object.assign(blank(), j.st); b.diariasUpd = Object.assign({}, b.diariasUpd || {});
+          ajustarHorarios(b, st.resetAt || 0, Date.now()); b.perfilUpd = Date.now(); b.resetAt = 0; b.apagados = {}; // nome e saldo inicial do backup prevalecem
           st = merge(st, b); save(); view = 'home'; render(); toast('Backup restaurado');
         });
       } catch (e) { toast('Arquivo de backup inválido'); }
