@@ -397,7 +397,8 @@
   /* previsão */
   function novoFp() {
     var ini = proxSabado(hoje());
-    return { ini: ini, fim: C.addDays(ini, 6), local: '', equipe: [st.perfil.nome || ''], combQtd: '200', combUnit: '7,00', km: '', hospQtd: '0', hospUnit: '', diversas: '0,00', projeto: '', cliente: '' };
+    var ult = (st.previsoes || []).slice().sort(function (a, b) { return (b.criado || 0) - (a.criado || 0); })[0] || {}; // repete projeto/cliente da última previsão
+    return { ini: ini, fim: C.addDays(ini, 6), local: '', equipe: [st.perfil.nome || ''], combQtd: '200', combUnit: '7,00', km: '', hospQtd: '0', hospUnit: '', diversas: '0,00', projeto: ult.projeto || 'COMISSIONAMENTO/MANUTENÇÃO', cliente: ult.cliente || 'EQUATORIAL' };
   }
   function fpObj() {
     return {
@@ -428,18 +429,18 @@
       '<div class="card"><div class="row"><div><label class="f">Início</label>' + dateField('p_ini', fp.ini, 'fpIni') + '</div>' +
       '<div><label class="f">Fim</label>' + dateField('p_fim', fp.fim, 'fpSet', ['fim'], [true]) + '</div></div>' +
       '<p class="muted" style="margin:8px 0 0">' + dias + ' dias de serviço</p>' +
+      '<label class="f">Projeto</label><input class="i" value="' + h(fp.projeto) + '" placeholder="Ex.: Comissionamento/Manutenção" oninput="A.fpSet(\'projeto\',this.value)">' +
+      '<label class="f">Cliente</label><input class="i" value="' + h(fp.cliente) + '" placeholder="Ex.: Equatorial" oninput="A.fpSet(\'cliente\',this.value)">' +
       '<label class="f">Local (cidade-UF)</label><input class="i" value="' + h(fp.local) + '" placeholder="Ex.: Goiânia-GO" oninput="A.fpSet(\'local\',this.value)"></div>' +
       '<div class="card"><label class="f" style="margin-top:0">Quantas pessoas na equipe?</label><div class="stepper"><button onclick="A.fpN(-1)">−</button><span>' + n + '</span><button onclick="A.fpN(1)">+</button></div>' +
       fp.equipe.map(function (nm, i) { return '<label class="f">' + (i === 0 ? 'Você (líder)' : 'Pessoa ' + (i + 1)) + '</label><input class="i" value="' + h(nm) + '" placeholder="Nome completo" oninput="A.fpEq(' + i + ',this.value)">'; }).join('') + '</div>' +
       '<div class="card"><b>Combustível</b><div class="row"><div><label class="f">Litros</label><input class="i" inputmode="decimal" value="' + h(fp.combQtd) + '" oninput="A.fpSet(\'combQtd\',this.value)"></div>' +
       '<div><label class="f">R$ por litro</label><input class="i" inputmode="decimal" value="' + h(fp.combUnit) + '" oninput="A.fpSet(\'combUnit\',this.value)"></div></div>' +
-      '<details><summary>Mais opções (hospedagem, km, projeto…)</summary>' +
+      '<details><summary>Mais opções (hospedagem, km…)</summary>' +
       '<div class="row"><div><label class="f">Diárias de hotel</label><input class="i" inputmode="numeric" value="' + h(fp.hospQtd) + '" oninput="A.fpSet(\'hospQtd\',this.value)"></div>' +
       '<div><label class="f">R$ por diária de hotel</label><input class="i" inputmode="decimal" placeholder="' + fmtNum(C.HOTEL * n) + '" value="' + h(fp.hospUnit) + '" oninput="A.fpSet(\'hospUnit\',this.value)"></div></div>' +
       '<label class="f">Despesas diversas (R$)</label><input class="i" inputmode="decimal" value="' + h(fp.diversas) + '" oninput="A.fpSet(\'diversas\',this.value)">' +
       '<label class="f">Deslocamento (km)</label><input class="i" inputmode="numeric" value="' + h(fp.km) + '" oninput="A.fpSet(\'km\',this.value)">' +
-      '<label class="f">Projeto</label><input class="i" value="' + h(fp.projeto) + '" placeholder="Ex.: Comissionamento/Manutenção" oninput="A.fpSet(\'projeto\',this.value)">' +
-      '<label class="f">Cliente</label><input class="i" value="' + h(fp.cliente) + '" placeholder="Ex.: Equatorial" oninput="A.fpSet(\'cliente\',this.value)">' +
       '</details></div>' +
       '<div class="card" id="resumo">' + resumoPrev() + '</div>' +
       '<button class="btn lar" onclick="A.salvarPrev()">Salvar previsão</button>' +

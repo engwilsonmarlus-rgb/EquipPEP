@@ -56,7 +56,9 @@
   function previsaoDoDia(st, iso) {
     var ps = st.previsoes || [];
     for (var i = ps.length - 1; i >= 0; i--) if (ps[i].ini <= iso && iso <= ps[i].fim) return ps[i];
-    return null;
+    // fora de qualquer previsão: usa a última que começou antes desse dia (projeto/cliente costumam se repetir)
+    var ant = ps.filter(function (p) { return p.ini <= iso; }).sort(function (a, b) { return a.ini < b.ini ? 1 : -1; })[0];
+    return ant || null;
   }
   function montarPrestacao(st, ano, mes) {
     var ini = ano + '-' + pad(mes) + '-01', fim = ultimoDia(ano, mes);
@@ -84,7 +86,7 @@
       var n = Math.max(dia ? 1 : 0, c.length, h.length, v.length, 1);
       var pv = previsaoDoDia(st, d);
       for (var k = 0; k < n; k++) linhas.push({
-        data: d, projeto: pv && pv.projeto || '', cliente: pv && pv.cliente || '',
+        data: d, projeto: (pv && pv.projeto || '').toUpperCase(), cliente: (pv && pv.cliente || '').toUpperCase(),
         diaria: k === 0 ? dia : null, comb: c[k] || null, hosp: h[k] || null, div: v[k] || null
       });
     });
@@ -185,7 +187,7 @@
     var s1 = W(T['xl/worksheets/sheet1.xml'].d);
     var s2 = W(T['xl/worksheets/sheet2.xml'].d);
     s1.v('G1', ' N° PDEM' + (perfil.codigo || ''))
-      .v('C6', p.projeto || '').v('C7', p.cliente || '')
+      .v('C6', (p.projeto || '').toUpperCase()).v('C7', (p.cliente || '').toUpperCase())
       .v('C8', serial(p.ini)).v('G8', serial(p.fim))
       .v('C9', (p.local || '').toUpperCase())
       .v('C10', p.km ? Number(p.km) : '')
